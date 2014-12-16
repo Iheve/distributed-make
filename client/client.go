@@ -15,7 +15,8 @@ func main() {
 	}
 
 	args := new(Args)
-	args.Command = "date"
+	args.Command = "echo"
+	args.Arguments = []string{"echo", "coucou", "Thibaut"}
 	// Asynchronous call
 	response := new(Response)
 	workerCall := client.Go("Worker.Output", args, response, nil)

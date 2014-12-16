@@ -6,7 +6,8 @@ import (
 )
 
 type Args struct {
-	Command string
+	Command   string
+	Arguments []string
 }
 
 type Response struct {
@@ -16,7 +17,9 @@ type Response struct {
 type Worker int
 
 func (t *Worker) Output(args *Args, response *Response) error {
-	out, err := exec.Command(args.Command).Output()
+	cmd := exec.Command(args.Command)
+	cmd.Args = args.Arguments
+	out, err := cmd.Output()
 	response.Output = fmt.Sprintf("%s", out)
 	if err == nil {
 		fmt.Printf("Command executed successfully. Output:\n%s", out)
