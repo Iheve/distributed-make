@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	. "github.com/Iheve/distributed-make/arith"
+	. "github.com/Iheve/distributed-make/worker"
 	"log"
 	"net/rpc"
 )
@@ -14,11 +14,12 @@ func main() {
 		log.Fatal("dialing:", err)
 	}
 
-	args := Args{10, 4}
+	args := new(Args)
+	args.Command = "date"
 	// Asynchronous call
-	quotient := new(Quotient)
-	divCall := client.Go("Arith.Divide", args, quotient, nil)
-	replyCall := <-divCall.Done // will be equal to divCall
+	response := new(Response)
+	workerCall := client.Go("Worker.Output", args, response, nil)
+	replyCall := <-workerCall.Done
 	// check errors, print, etc.
 	fmt.Println("result: ", replyCall.Reply)
 }
