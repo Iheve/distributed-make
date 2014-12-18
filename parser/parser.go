@@ -109,7 +109,14 @@ func walk(t *Task, d int) {
 }
 
 func main() {
-	head, err := Parse("Makefile")
+	// Check if there is an argument
+	if len(os.Args) != 2 {
+		path = "Makefile"
+	} else {
+		path := os.Args[1]
+	}
+
+	head, err := Parse(path)
 	if err != nil {
 		log.Fatal(err)
 		return
