@@ -18,23 +18,13 @@ type Task struct {
 
 func line1(l string) (target string, deps []string) {
 	//Get the target
-	var sep string
-	switch {
-	case strings.Contains(l, " : "):
-		sep = " : "
-	case strings.Contains(l, ": "):
-		sep = ": "
-	case strings.Contains(l, " :"):
-		sep = " :"
-	case strings.Contains(l, ":"):
-		sep = ":"
-	default:
+	if !strings.Contains(l, ":") {
 		log.Fatal("Invalid line : can't find separator ':'")
 	}
-	c := strings.SplitN(l, sep, 2)
-	target = c[0]
-	//Get the dependences
-	deps = strings.Split(c[1], " ")
+	c := strings.SplitN(l, ":", 2)
+	target = strings.TrimSpace(c[0])
+	//Get the dependencies
+	deps = strings.Split(strings.TrimSpace(c[1]), " ")
 	return
 }
 
@@ -119,7 +109,6 @@ func walk(t *Task, d int) {
 }
 
 func main() {
-
 	head, err := Parse("Makefile")
 	if err != nil {
 		log.Fatal(err)
@@ -128,5 +117,4 @@ func main() {
 
 	//fmt.Println(head)
 	walk(head, 0)
-
 }
