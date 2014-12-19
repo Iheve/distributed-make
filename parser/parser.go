@@ -34,7 +34,7 @@ func readCmd(l string) (cmds []*exec.Cmd) {
 	for _, c := range strings.Split(l, ";") {
 		c := strings.TrimSpace(c)
 		args := strings.Split(c, " ")
-		cmd := exec.Command(args[0], args...)
+		cmd := exec.Command(args[0], args[1:]...)
 		cmds = append(cmds, cmd)
 	}
 	return
