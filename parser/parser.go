@@ -84,6 +84,7 @@ func Parse(filename string) (head *Task, err error) {
 				}
 				cmds = nil
 			}
+			targetSet = false
 			continue
 		}
 		if strings.HasPrefix(scanner.Text(), "\t") {
@@ -123,14 +124,14 @@ func walk(t *Task, d int) {
 		fmt.Print("\t")
 	}
 	fmt.Println(t.Target)
-	/*
-		for _, c := range t.Cmds {
-			for i := 0; i < d; i++ {
-				fmt.Print("\t")
-			}
-			fmt.Println(c.Args)
+
+	for _, c := range t.Cmds {
+		for i := 0; i < d; i++ {
+			fmt.Print("\t")
 		}
-	*/
+		fmt.Println(c.Args)
+	}
+
 	for _, s := range t.Sons {
 		if s != nil {
 			walk(s, d+1)
