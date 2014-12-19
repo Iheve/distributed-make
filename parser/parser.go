@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"bufio"
@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 )
 
 type Task struct {
-	Target string
-	Deps   []string
-	Cmds   []*exec.Cmd
-	Sons   []*Task
+	Target   string
+	Deps     []string
+	Cmds     [][]string
+	Sons     []*Task
+	Affected bool
+	Done     bool
 }
 
 func readTarget(l string) (target string, deps []string) {
@@ -29,22 +30,23 @@ func readTarget(l string) (target string, deps []string) {
 	return
 }
 
-func readCmd(l string) (cmds []*exec.Cmd) {
+func readCmd(l string) (cmds [][]string) {
 	cmds = nil
 	for _, c := range strings.Split(l, ";") {
 		c := strings.TrimSpace(c)
 		args := strings.Split(c, " ")
-		cmd := exec.Command(args[0], args[1:]...)
-		cmds = append(cmds, cmd)
+		cmds = append(cmds, args)
 	}
 	return
 }
 
-func newTask(target string, deps []string, cmds []*exec.Cmd) *Task {
+func newTask(target string, deps []string, cmds [][]string) *Task {
 	task := new(Task)
 	task.Target = target
 	task.Deps = deps
 	task.Cmds = cmds
+	task.Affected = false
+	task.Affected = false
 	return task
 }
 
@@ -69,7 +71,7 @@ func Parse(filename string) (head *Task, err error) {
 	tasks := make(map[string]*Task)
 	var target string
 	var deps []string
-	var cmds []*exec.Cmd = nil
+	var cmds [][]string = nil
 	targetSet := false
 	first := true
 
@@ -119,7 +121,7 @@ func Parse(filename string) (head *Task, err error) {
 	return
 }
 
-func walk(t *Task, d int) {
+func Print(t *Task, d int) {
 	for i := 0; i < d; i++ {
 		fmt.Print("\t")
 	}
@@ -129,12 +131,12 @@ func walk(t *Task, d int) {
 		for i := 0; i < d; i++ {
 			fmt.Print("\t")
 		}
-		fmt.Println(c.Args)
+		fmt.Println(c)
 	}
 
 	for _, s := range t.Sons {
 		if s != nil {
-			walk(s, d+1)
+			Print(s, d+1)
 		}
 	}
 }
@@ -154,5 +156,5 @@ func main() {
 		return
 	}
 
-	walk(head, 0)
+	Print(head, 0)
 }
