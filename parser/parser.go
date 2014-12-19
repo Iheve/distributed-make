@@ -110,10 +110,11 @@ func walk(t *Task, d int) {
 
 func main() {
 	// Check if there is an argument
+	var path string
 	if len(os.Args) != 2 {
 		path = "Makefile"
 	} else {
-		path := os.Args[1]
+		path = os.Args[1]
 	}
 
 	head, err := Parse(path)
