@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Iheve/distributed-make/parser"
 	"github.com/Iheve/distributed-make/worker"
+	"io/ioutil"
 	"log"
 	"net/rpc"
 	"os"
@@ -13,13 +14,36 @@ func run(client *rpc.Client, todo chan *parser.Task) {
 	for {
 		t := <-todo
 		var response worker.Response
-		//Synchronous call TODO switch to asynchronous ?
 		args := new(worker.Args)
+		fmt.Println("Target :", t.Target)
+		args.Target = t.Target
 		args.Cmds = t.Cmds
+		//Pack dependencies
+		for _, d := range t.Deps {
+			fmt.Printf("Target: %s Dep: %s\n", t.Target, d)
+			if d == "" {
+				continue
+			}
+			var f worker.File
+			f.Name = d
+			var err error
+			f.Content, err = ioutil.ReadFile(d)
+			if err != nil {
+				log.Fatal("Cant read file: ", d, " : ", err)
+			}
+			args.Deps = append(args.Deps, f)
+		}
+		//Synchronous call TODO switch to asynchronous ?
 		err := client.Call("Worker.Output", args, &response)
 		if err != nil {
 			log.Fatal("RPC call error:", err)
 		}
+		//Unpack target
+		err = ioutil.WriteFile(response.Target.Name, response.Target.Content, 0777)
+		if err != nil {
+			log.Fatal("Can not create file: ", response.Target.Name, " : ", err)
+		}
+
 		t.Done = true
 		fmt.Println("Command done, outputs:")
 		for _, s := range response.Output {
