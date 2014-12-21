@@ -21,7 +21,7 @@ type Task struct {
 func readTarget(l string) (target string, deps []string) {
 	//Get the target
 	if !strings.Contains(l, ":") {
-		log.Fatal("Invalid line : can't find separator ':'")
+		log.Fatal("Invalid line : can't find separator ':' in line : ", l)
 	}
 	c := strings.SplitN(l, ":", 2)
 	target = strings.TrimSpace(c[0])
@@ -76,8 +76,8 @@ func Parse(filename string) (head *Task, err error) {
 	first := true
 
 	for scanner.Scan() {
-		if len(scanner.Text()) == 0 {
-			//Skip empty lines
+		if len(scanner.Text()) == 0 || strings.HasPrefix(scanner.Text(), "#") {
+			//Skip empty lines and comments
 			if targetSet {
 				tasks[target] = newTask(target, deps, cmds)
 				if first {
