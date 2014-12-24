@@ -78,15 +78,6 @@ func Parse(filename string) (head *Task, err error) {
 	for scanner.Scan() {
 		if len(scanner.Text()) == 0 || strings.HasPrefix(scanner.Text(), "#") {
 			//Skip empty lines and comments
-			if targetSet {
-				tasks[target] = newTask(target, deps, cmds)
-				if first {
-					head = tasks[target]
-					first = false
-				}
-				cmds = nil
-			}
-			targetSet = false
 			continue
 		}
 		if strings.HasPrefix(scanner.Text(), "\t") {
@@ -97,6 +88,14 @@ func Parse(filename string) (head *Task, err error) {
 			}
 			cmds = append(cmds, readCmd(scanner.Text())...)
 		} else {
+			if targetSet {
+				tasks[target] = newTask(target, deps, cmds)
+				if first {
+					head = tasks[target]
+					first = false
+				}
+				cmds = nil
+			}
 			target, deps = readTarget(scanner.Text())
 			targetSet = true
 		}
