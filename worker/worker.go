@@ -51,6 +51,7 @@ func (t *Worker) Output(args *Args, response *Response) error {
 		log.Println("Executing cmd :", cmd)
 		c := exec.Command(cmd[0], cmd[1:]...)
 		c.Dir = dir
+		c.Env = []string{"PWD=" + dir}
 		out, err := c.Output()
 		response.Output = append(response.Output, fmt.Sprintf("%s", out))
 		if err == nil {
