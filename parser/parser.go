@@ -12,7 +12,7 @@ import (
 type Task struct {
 	Target   string
 	Deps     []string
-	Cmds     [][]string
+	Cmds     []string
 	Sons     []*Task
 	Affected bool
 	Done     bool
@@ -30,17 +30,18 @@ func readTarget(l string) (target string, deps []string) {
 	return
 }
 
-func readCmd(l string) (cmds [][]string) {
+func readCmd(l string) (cmds []string) {
 	cmds = nil
 	for _, c := range strings.Split(l, ";") {
-		c := strings.TrimSpace(c)
-		args := strings.Split(c, " ")
-		cmds = append(cmds, args)
+		//c := strings.TrimSpace(c)
+		//args := strings.Split(c, " ")
+		//cmds = append(cmds, args)
+		cmds = append(cmds, c)
 	}
 	return
 }
 
-func newTask(target string, deps []string, cmds [][]string) *Task {
+func newTask(target string, deps []string, cmds []string) *Task {
 	task := new(Task)
 	task.Target = target
 	task.Deps = deps
@@ -71,7 +72,7 @@ func Parse(filename string) (head *Task, err error) {
 	tasks := make(map[string]*Task)
 	var target string
 	var deps []string
-	var cmds [][]string = nil
+	var cmds []string = nil
 	targetSet := false
 	first := true
 
