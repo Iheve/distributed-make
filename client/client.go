@@ -12,17 +12,16 @@ import (
 	"os"
 )
 
-func run(client *rpc.Client, todo chan *parser.Task) {
+func run(client *rpc.Client, name string, todo chan *parser.Task) {
 	for {
 		t := <-todo
 		var response worker.Response
 		args := new(worker.Args)
-		fmt.Println("Target :", t.Target)
+		log.Println(name, " target:", t.Target)
 		args.Target = t.Target
 		args.Cmds = t.Cmds
 		//Pack dependencies
 		for _, d := range t.Deps {
-			fmt.Printf("Target: %s Dep: %s\n", t.Target, d)
 			if d == "" {
 				continue
 			}
@@ -49,14 +48,22 @@ func run(client *rpc.Client, todo chan *parser.Task) {
 		}
 
 		t.Done = true
+        /*
 		fmt.Println("Command done, outputs:")
 		for _, s := range response.Output {
 			fmt.Print(s)
 		}
+        */
 	}
 }
 
-func walk(t *parser.Task, todo chan *parser.Task) bool {
+func walk(t *parser.Task, todo chan *parser.Task, depth int) bool {
+    /*
+    for i:=0; i < depth; i++ {
+        fmt.Print("\t")
+    }
+    fmt.Print(t.Target, ":", t.Done, "\n")
+    */
 	if t.Done {
 		return true
 	}
@@ -68,7 +75,7 @@ func walk(t *parser.Task, todo chan *parser.Task) bool {
 	res := true
 	for _, s := range t.Sons {
 		if s != nil {
-			res = res && walk(s, todo)
+			res = walk(s, todo, depth + 1) && res
 		}
 	}
 
@@ -107,7 +114,7 @@ func main() {
 	hosts := config.Parse(*hostFilePtr)
 
 	fmt.Println("Hosts:", hosts)
-	todo := make(chan *parser.Task, 10) //TODO set the buffer lenght in function of the number of worker
+	todo := make(chan *parser.Task) //TODO set the buffer lenght in function of the number of worker
 
 	for i := range hosts {
 		serverAddress := hosts[i]
@@ -116,10 +123,10 @@ func main() {
 			log.Fatal("dialing:", err)
 		}
 
-		go run(client, todo) //TODO run for each worker
+		go run(client, serverAddress, todo) //TODO run for each worker
 	}
 
-	for !walk(head, todo) {
+	for !walk(head, todo, 0) {
 	}
 
 }
