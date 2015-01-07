@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"github.com/Iheve/distributed-make/config"
 	"github.com/Iheve/distributed-make/parser"
 	"github.com/Iheve/distributed-make/worker"
 	"io/ioutil"
@@ -79,12 +81,20 @@ func walk(t *parser.Task, todo chan *parser.Task) bool {
 }
 
 func main() {
-
 	var path string
-	if len(os.Args) != 2 {
+
+	hostFilePtr := flag.String("hostfile", "hostfile.cfg", "a string")
+	flag.Parse()
+
+	fmt.Println("Hostfile: ", *hostFilePtr)
+	fmt.Println("Args: ", flag.Args())
+
+	args := flag.Args()
+
+	if len(args) != 1 {
 		path = "Makefile"
 	} else {
-		path = os.Args[1]
+		path = args[0]
 	}
 
 	head, err := parser.Parse(path)
@@ -94,16 +104,21 @@ func main() {
 	}
 
 	parser.Print(head, 0)
+	hosts := config.Parse(*hostFilePtr)
 
-	serverAddress := "localhost:1234"
-	client, err := rpc.DialHTTP("tcp", serverAddress)
-	if err != nil {
-		log.Fatal("dialing:", err)
-	}
-
+	fmt.Println("Hosts:", hosts)
 	todo := make(chan *parser.Task, 10) //TODO set the buffer lenght in function of the number of worker
 
-	go run(client, todo) //TODO run for each worker
+	for i := range hosts {
+		serverAddress := hosts[i]
+		client, err := rpc.DialHTTP("tcp", serverAddress)
+		if err != nil {
+			log.Fatal("dialing:", err)
+		}
+
+		go run(client, todo) //TODO run for each worker
+	}
+
 	for !walk(head, todo) {
 	}
 
