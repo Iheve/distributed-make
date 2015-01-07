@@ -26,6 +26,8 @@ func run(client *rpc.Client, todo chan *parser.Task) {
 			}
 			var f worker.File
 			f.Name = d
+			info, _ := os.Stat(d)
+			f.Mode = info.Mode()
 			var err error
 			f.Content, err = ioutil.ReadFile(d)
 			if err != nil {
@@ -39,7 +41,7 @@ func run(client *rpc.Client, todo chan *parser.Task) {
 			log.Fatal("RPC call error:", err)
 		}
 		//Unpack target
-		err = ioutil.WriteFile(response.Target.Name, response.Target.Content, 0777)
+		err = ioutil.WriteFile(response.Target.Name, response.Target.Content, response.Target.Mode)
 		if err != nil {
 			log.Fatal("Can not create file: ", response.Target.Name, " : ", err)
 		}

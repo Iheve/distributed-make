@@ -6,12 +6,14 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
 
 type File struct {
 	Name    string
+	Mode    os.FileMode
 	Content []byte
 }
 
@@ -99,7 +101,7 @@ func (t *Worker) Output(args *Args, response *Response) error {
 		if f.Name == "" {
 			continue
 		}
-		err := ioutil.WriteFile(dir+f.Name, f.Content, 0777)
+		err := ioutil.WriteFile(dir+f.Name, f.Content, f.Mode)
 		if err != nil {
 			log.Println("Can not create file: ", f.Name, " : ", err)
 			return err
@@ -123,6 +125,8 @@ func (t *Worker) Output(args *Args, response *Response) error {
 	}
 	//Pack target
 	response.Target.Name = args.Target
+	info, _ := os.Stat(dir + args.Target)
+	response.Target.Mode = info.Mode()
 	response.Target.Content, err = ioutil.ReadFile(dir + args.Target)
 	if err != nil {
 		log.Println("Cant read file: ", args.Target, " : ", err)
