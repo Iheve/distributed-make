@@ -1,24 +1,20 @@
 package config
 
 import (
-	"strings"
 	"bufio"
-	"os"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
+	"strings"
 )
 
-type Host struct {
-	Address string
-	Port int64
-}
-
-func Parse(filename string) []*Host {
-	hosts := make([]*Host, 0)
+func Parse(filename string) (hosts []string) {
+	hosts = make([]string, 0)
 
 	file, err := os.Open(filename)
 	if err != nil {
+		log.Fatal("Cannot open " + filename)
 		return nil
 	}
 	defer file.Close()
@@ -43,21 +39,26 @@ func Parse(filename string) []*Host {
 	return hosts
 }
 
-func readLine(l string) *Host {
-	var err error
-	var port int64
+func readLine(l string) (host string) {
+	defaultPort := 4242
+	var hostname string
+	var port int
 
+	// If there is an empty hostname, we raise error
 	c := strings.SplitN(l, ":", 2)
 
-	host := new(Host)
-	host.Address = c[0]
-	port, err = strconv.ParseInt(c[1], 0, 0)
-
-	if err != nil {
-		log.Fatal(err)
+	hostname = c[0]
+	if hostname == "" {
+		log.Fatal("Invalid hostname : empty hostname")
 	}
 
-	host.Port = port
+	// If there is an empty port number, we use the default one (== 4242)
+	port, _ = strconv.Atoi(c[1])
+	if port == 0 {
+		port = defaultPort
+	}
+
+	host = hostname + ":" + strconv.Itoa(port)
 
 	return host
 }
@@ -67,7 +68,7 @@ func main() {
 	var path string
 
 	if len(os.Args) != 2 {
-		path = "fichier.cfg"
+		path = "hostfile.cfg"
 	} else {
 		path = os.Args[1]
 	}
@@ -76,8 +77,6 @@ func main() {
 
 	// Print the list of hosts
 	for i := range hosts {
-		fmt.Print(hosts[i].Address)
-		fmt.Print(":")
-		fmt.Println(hosts[i].Port)
+		fmt.Println(hosts[i])
 	}
 }
