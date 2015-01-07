@@ -27,6 +27,12 @@ type Response struct {
 }
 
 func execute(cmd, dir string) (outCmd []byte, err error) {
+	if strings.ContainsAny(cmd, ";><$`") {
+		c := exec.Command("bash", "-c", cmd)
+		c.Dir = dir
+		c.Env = []string{"PWD=" + dir}
+		return c.Output()
+	}
 	var output bytes.Buffer
 	var cmdSplit = strings.Split(cmd, "|")
 	var cmds []*exec.Cmd
