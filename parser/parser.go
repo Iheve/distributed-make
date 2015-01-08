@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
@@ -121,24 +122,31 @@ func Parse(filename string) (head *Task, err error) {
 	return
 }
 
-func Print(t *Task, d int) {
+func walk(t *Task, d int, buffer *bytes.Buffer) {
 	for i := 0; i < d; i++ {
-		fmt.Print("\t")
+		buffer.WriteString("\t")
 	}
-	fmt.Println(t.Target)
+	buffer.WriteString(t.Target + "\n")
 
 	for _, c := range t.Cmds {
 		for i := 0; i < d; i++ {
-			fmt.Print("\t")
+			buffer.WriteString("\t")
 		}
-		fmt.Println(c)
+		buffer.WriteString(c + "\n")
 	}
 
 	for _, s := range t.Sons {
 		if s != nil {
-			Print(s, d+1)
+			walk(s, d+1, buffer)
 		}
 	}
+}
+
+func (t *Task) String() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("\n")
+	walk(t, 0, &buffer)
+	return buffer.String()
 }
 
 func main() {
@@ -156,5 +164,5 @@ func main() {
 		return
 	}
 
-	Print(head, 0)
+	fmt.Print(head)
 }

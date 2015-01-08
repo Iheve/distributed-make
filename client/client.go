@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/Iheve/distributed-make/config"
 	"github.com/Iheve/distributed-make/parser"
 	"github.com/Iheve/distributed-make/worker"
@@ -100,20 +99,24 @@ func main() {
 		return
 	}
 
-	fmt.Println("Hostfile: ", hostfileName)
-	fmt.Println("Makefile: ", makefileName)
-	fmt.Println("Args: ", flag.Args())
+	log.Println("Using hostfile: ", hostfileName)
+	log.Println("Using makefile: ", makefileName)
 
+	log.Println("Parsing the Makefile...")
 	head, err := parser.Parse(makefileName)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+	log.Println("Done")
 
+	log.Println("Parsing the hostfile...")
 	hosts := config.Parse(hostfileName)
-	fmt.Println("Hosts:", hosts)
+	log.Println("Done")
 
-	parser.Print(head, 0)
+	log.Println("Hosts:", hosts)
+	log.Print("Graph:\n", head)
+
 	todo := make(chan *parser.Task) //TODO set the buffer lenght in function of the number of worker
 
 	for i := range hosts {
