@@ -87,7 +87,7 @@ func call(cmds []*exec.Cmd, pipes []*io.PipeWriter) (err error) {
 type Worker int
 
 func (t *Worker) Output(args *Args, response *Response) error {
-	log.Println("New rpc")
+	log.Println("Building target: ", args.Target)
 	//Create temp dir
 	dir, err := ioutil.TempDir("", "dmake")
 	if err != nil {
@@ -95,7 +95,6 @@ func (t *Worker) Output(args *Args, response *Response) error {
 		return err
 	}
 	dir = dir + "/"
-	log.Println("Using temp dir: ", dir)
 	//Unpack dependencies
 	for _, f := range args.Deps {
 		if f.Name == "" {
@@ -109,17 +108,10 @@ func (t *Worker) Output(args *Args, response *Response) error {
 	}
 	//Run commands
 	for _, cmd := range args.Cmds {
-		log.Println("Executing cmd :", cmd)
 		out, err := execute(cmd, dir)
-		/*c := exec.Command(cmd[0], cmd[1:]...)
-		c.Dir = dir
-		c.Env = []string{"PWD=" + dir}
-		out, err := c.Output()*/
 		response.Output = append(response.Output, fmt.Sprintf("%s", out))
 		if err == nil {
-			log.Printf("Command executed successfully. Output:\n%s", out)
 		} else {
-			log.Printf("Command failed with error: %v", err)
 			return err
 		}
 	}
