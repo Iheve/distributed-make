@@ -80,13 +80,6 @@ func walk(t *parser.Task, todo chan *parser.Task) bool {
 	return false
 }
 
-func findTasks(chanDone chan int, done *bool, head *parser.Task, todo chan *parser.Task) {
-	for !walk(head, todo) {
-	}
-	chanDone <- 1
-	*done = true
-}
-
 func main() {
 	var help, verbose, showGraph bool
 	var hostfileName, makefileName string
@@ -119,15 +112,8 @@ func main() {
 	log.Println("Done")
 
 	todo := make(chan *parser.Task)
-	chanDone := make(chan int)
-
-	done := false
-	go findTasks(chanDone, &done, head, todo)
 
 	for _, host := range hosts {
-		if done {
-			break
-		}
 		client, err := rpc.DialHTTP("tcp", host)
 		if err != nil {
 			log.Println("Can not contact", host, err)
@@ -136,6 +122,7 @@ func main() {
 		go run(client, host, todo, verbose)
 	}
 
-	<-chanDone
+	for !walk(head, todo) {
+	}
 
 }
