@@ -11,12 +11,12 @@ import (
 	"os"
 )
 
-func run(client *rpc.Client, name string, todo chan *parser.Task) {
+func run(client *rpc.Client, name string, todo chan *parser.Task, verbose bool) {
 	for {
 		t := <-todo
 		var response worker.Response
 		args := new(worker.Args)
-		log.Println(name, " target:", t.Target)
+		log.Println(name, "builds", t.Target)
 		args.Target = t.Target
 		args.Cmds = t.Cmds
 		//Pack dependencies
@@ -35,10 +35,10 @@ func run(client *rpc.Client, name string, todo chan *parser.Task) {
 			}
 			args.Deps = append(args.Deps, f)
 		}
-		//Synchronous call TODO switch to asynchronous ?
+		//Synchronous call
 		err := client.Call("Worker.Output", args, &response)
 		if err != nil {
-			log.Fatal("RPC call error:", err)
+			log.Fatal(name, "RPC call error:", err)
 		}
 		//Unpack target
 		err = ioutil.WriteFile(response.Target.Name, response.Target.Content, response.Target.Mode)
@@ -47,22 +47,16 @@ func run(client *rpc.Client, name string, todo chan *parser.Task) {
 		}
 
 		t.Done = true
-		/*
-			fmt.Println("Command done, outputs:")
+		if verbose {
+			log.Println(name, "Command done, outputs:")
 			for _, s := range response.Output {
-				fmt.Print(s)
+				log.Println("\n", s)
 			}
-		*/
+		}
 	}
 }
 
-func walk(t *parser.Task, todo chan *parser.Task, depth int) bool {
-	/*
-	   for i:=0; i < depth; i++ {
-	       fmt.Print("\t")
-	   }
-	   fmt.Print(t.Target, ":", t.Done, "\n")
-	*/
+func walk(t *parser.Task, todo chan *parser.Task) bool {
 	if t.Done {
 		return true
 	}
@@ -74,7 +68,7 @@ func walk(t *parser.Task, todo chan *parser.Task, depth int) bool {
 	res := true
 	for _, s := range t.Sons {
 		if s != nil {
-			res = walk(s, todo, depth+1) && res
+			res = walk(s, todo) && res
 		}
 	}
 
@@ -87,9 +81,11 @@ func walk(t *parser.Task, todo chan *parser.Task, depth int) bool {
 }
 
 func main() {
-	var help bool
+	var help, verbose, showGraph bool
 	var hostfileName, makefileName string
 	flag.BoolVar(&help, "help", false, "Display this helper message")
+	flag.BoolVar(&verbose, "verbose", false, "Show outputs of commands")
+	flag.BoolVar(&showGraph, "showgraph", false, "Show the graph of dependencies")
 	flag.StringVar(&hostfileName, "hostfile", "hostfile.cfg", "File listing host running the listener")
 	flag.StringVar(&makefileName, "makefile", "Makefile", "The Makefile")
 	flag.Parse()
@@ -99,9 +95,6 @@ func main() {
 		return
 	}
 
-	log.Println("Using hostfile: ", hostfileName)
-	log.Println("Using makefile: ", makefileName)
-
 	log.Println("Parsing the Makefile...")
 	head, err := parser.Parse(makefileName)
 	if err != nil {
@@ -110,26 +103,26 @@ func main() {
 	}
 	log.Println("Done")
 
+	if showGraph {
+		log.Print("Graph:\n", head)
+	}
+
 	log.Println("Parsing the hostfile...")
 	hosts := config.Parse(hostfileName)
 	log.Println("Done")
 
-	log.Println("Hosts:", hosts)
-	log.Print("Graph:\n", head)
+	todo := make(chan *parser.Task)
 
-	todo := make(chan *parser.Task) //TODO set the buffer lenght in function of the number of worker
-
-	for i := range hosts {
-		serverAddress := hosts[i]
-		client, err := rpc.DialHTTP("tcp", serverAddress)
+	for _, host := range hosts {
+		client, err := rpc.DialHTTP("tcp", host)
 		if err != nil {
-			log.Fatal("dialing:", err)
+			log.Println("Can not contact", host, err)
+			continue
 		}
-
-		go run(client, serverAddress, todo) //TODO run for each worker
+		go run(client, host, todo, verbose)
 	}
 
-	for !walk(head, todo, 0) {
+	for !walk(head, todo) {
 	}
 
 }
