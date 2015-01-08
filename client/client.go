@@ -48,22 +48,22 @@ func run(client *rpc.Client, name string, todo chan *parser.Task) {
 		}
 
 		t.Done = true
-        /*
-		fmt.Println("Command done, outputs:")
-		for _, s := range response.Output {
-			fmt.Print(s)
-		}
-        */
+		/*
+			fmt.Println("Command done, outputs:")
+			for _, s := range response.Output {
+				fmt.Print(s)
+			}
+		*/
 	}
 }
 
 func walk(t *parser.Task, todo chan *parser.Task, depth int) bool {
-    /*
-    for i:=0; i < depth; i++ {
-        fmt.Print("\t")
-    }
-    fmt.Print(t.Target, ":", t.Done, "\n")
-    */
+	/*
+	   for i:=0; i < depth; i++ {
+	       fmt.Print("\t")
+	   }
+	   fmt.Print(t.Target, ":", t.Done, "\n")
+	*/
 	if t.Done {
 		return true
 	}
@@ -75,7 +75,7 @@ func walk(t *parser.Task, todo chan *parser.Task, depth int) bool {
 	res := true
 	for _, s := range t.Sons {
 		if s != nil {
-			res = walk(s, todo, depth + 1) && res
+			res = walk(s, todo, depth+1) && res
 		}
 	}
 
@@ -88,32 +88,32 @@ func walk(t *parser.Task, todo chan *parser.Task, depth int) bool {
 }
 
 func main() {
-	var path string
-
-	hostFilePtr := flag.String("hostfile", "hostfile.cfg", "a string")
+	var help bool
+	var hostfileName, makefileName string
+	flag.BoolVar(&help, "help", false, "Display this helper message")
+	flag.StringVar(&hostfileName, "hostfile", "hostfile.cfg", "File listing host running the listener")
+	flag.StringVar(&makefileName, "makefile", "Makefile", "The Makefile")
 	flag.Parse()
 
-	fmt.Println("Hostfile: ", *hostFilePtr)
-	fmt.Println("Args: ", flag.Args())
-
-	args := flag.Args()
-
-	if len(args) != 1 {
-		path = "Makefile"
-	} else {
-		path = args[0]
+	if help {
+		flag.PrintDefaults()
+		return
 	}
 
-	head, err := parser.Parse(path)
+	fmt.Println("Hostfile: ", hostfileName)
+	fmt.Println("Makefile: ", makefileName)
+	fmt.Println("Args: ", flag.Args())
+
+	head, err := parser.Parse(makefileName)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	parser.Print(head, 0)
-	hosts := config.Parse(*hostFilePtr)
-
+	hosts := config.Parse(hostfileName)
 	fmt.Println("Hosts:", hosts)
+
+	parser.Print(head, 0)
 	todo := make(chan *parser.Task) //TODO set the buffer lenght in function of the number of worker
 
 	for i := range hosts {
