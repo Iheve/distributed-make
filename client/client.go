@@ -11,12 +11,17 @@ import (
 	"os"
 )
 
-func run(client *rpc.Client, name string, todo chan *parser.Task, verbose bool) {
+func run(host string, todo chan *parser.Task, verbose bool) {
+	client, err := rpc.DialHTTP("tcp", host)
+	if err != nil {
+		log.Println("Can not contact", host, err)
+		return
+	}
 	for {
 		t := <-todo
 		var response worker.Response
 		args := new(worker.Args)
-		log.Println(name, "builds", t.Target)
+		log.Println(host, "builds", t.Target)
 		args.Target = t.Target
 		args.Cmds = t.Cmds
 		//Pack dependencies
@@ -38,7 +43,7 @@ func run(client *rpc.Client, name string, todo chan *parser.Task, verbose bool) 
 		//Synchronous call
 		err := client.Call("Worker.Output", args, &response)
 		if err != nil {
-			log.Fatal(name, "RPC call error:", err)
+			log.Fatal(host, "RPC call error:", err)
 		}
 		//Unpack target
 		err = ioutil.WriteFile(response.Target.Name, response.Target.Content, response.Target.Mode)
@@ -48,7 +53,7 @@ func run(client *rpc.Client, name string, todo chan *parser.Task, verbose bool) 
 
 		t.Done = true
 		if verbose {
-			log.Println(name, "Command done, outputs:")
+			log.Println(host, "Command done, outputs:")
 			for _, s := range response.Output {
 				log.Println("\n", s)
 			}
@@ -114,12 +119,7 @@ func main() {
 	todo := make(chan *parser.Task)
 
 	for _, host := range hosts {
-		client, err := rpc.DialHTTP("tcp", host)
-		if err != nil {
-			log.Println("Can not contact", host, err)
-			continue
-		}
-		go run(client, host, todo, verbose)
+		go run(host, todo, verbose)
 	}
 
 	for !walk(head, todo) {
