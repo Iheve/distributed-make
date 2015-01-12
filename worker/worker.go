@@ -32,8 +32,9 @@ func execute(cmd, dir string) (outCmd []byte, err error) {
 	if strings.ContainsAny(cmd, ";><$`") {
 		c := exec.Command("bash", "-c", cmd)
 		c.Dir = dir
-		c.Env = []string{"PWD=" + dir}
-		return c.Output()
+		c.Env = os.Environ()
+		c.Env = append(c.Env, "PWD="+dir)
+		return c.CombinedOutput()
 	}
 	var output bytes.Buffer
 	var cmdSplit = strings.Split(cmd, "|")
@@ -46,7 +47,8 @@ func execute(cmd, dir string) (outCmd []byte, err error) {
 		args := strings.Split(oneCmd, " ")
 		c := exec.Command(args[0], args[1:]...)
 		c.Dir = dir
-		c.Env = []string{"PWD=" + dir}
+		c.Env = os.Environ()
+		c.Env = append(c.Env, "PWD="+dir)
 		cmds = append(cmds, c)
 	}
 
@@ -57,6 +59,7 @@ func execute(cmd, dir string) (outCmd []byte, err error) {
 		pipes[i] = out
 	}
 	cmds[i].Stdout = &output
+	cmds[i].Stderr = &output
 
 	if err := call(cmds, pipes); err != nil {
 		log.Printf("Command failed with error: %v", err)
@@ -112,6 +115,8 @@ func (t *Worker) Output(args *Args, response *Response) error {
 		response.Output = append(response.Output, fmt.Sprintf("%s", out))
 		if err == nil {
 		} else {
+			log.Println("Command failed with error ", err, " output:")
+			log.Println(string(out))
 			return err
 		}
 	}
