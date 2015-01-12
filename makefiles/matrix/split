@@ -1,0 +1,35 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my ($output_file, $input_file, $sx, $sy, $x, $y) = @ARGV;
+
+die "parameters missing" unless defined $y;
+
+open(FILE, "< $input_file");
+my $header = <FILE>;
+my ($w, $h) = split(/ /, $header);
+my $bw = $w / $sx;
+my $bh = $h / $sy;
+my $start_x = $bw * ($x-1);
+my $end_x = $bw * $x;
+my $start_y = $bh * ($y-1);
+
+open(DFILE, "> $output_file");
+print DFILE "$bw $bh\n";
+
+my $count = 0;
+while(<FILE>) {
+	chomp();
+	last if $count >= $end_x;
+	if ($count >= $start_x) {
+		my @line = split / /;
+		my @selection = splice(@line, $start_y, $bh);
+		print DFILE join(" ", @selection)."\n";
+	}
+	$count++;
+}
+
+close(FILE);
+close(DFILE);

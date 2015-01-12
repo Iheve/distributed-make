@@ -1,0 +1,13 @@
+
+produit de matrice
+
+utilisation : 
+
+generate_makefile.pl "taille" > Makefile
+
+(taille définit le grain de la découpe)
+
+random_matrix.pl taille_x taille_y > a
+random_matrix.pl taille_y taille_z > b
+
+make

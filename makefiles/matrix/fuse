@@ -1,0 +1,48 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my ($out, $sx, $sy) = splice(@ARGV, 0, 3);
+
+my @C;
+my $current_x = 0;
+my $last_x = 0;
+my $current_y = 0;
+my $matrix_count = 0;
+
+my $file;
+foreach $file (@ARGV) {
+	open(IN, " < $file");
+	my $header = <IN>;
+	my @line;
+	my $count = 0;
+	$matrix_count++;
+	while(<IN>) {
+		chomp();
+		@line = split / /;
+		#put at right place
+		$C[$current_x] = [] unless defined $C[$current_x];
+		$C[$current_x][$current_y+$_] = $line[$_] foreach (0..$#line);
+		$current_x++;
+		$count++;
+	}
+	close(IN);
+	if ($matrix_count == $sy) {
+		$matrix_count = 0;
+		$last_x += $count;
+		$current_y = 0;
+	} else {
+		$current_x = $last_x;
+		$current_y += scalar @line;
+	}
+}
+
+open(OUT, "> $out");
+my $m = scalar @C;
+my $n = scalar @{$C[0]};
+print OUT "$m $n\n";
+foreach(@C) {
+	print OUT join(" ", @{$_})."\n";
+}
+close(OUT);

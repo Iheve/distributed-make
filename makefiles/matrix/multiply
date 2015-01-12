@@ -1,0 +1,51 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my ($out, $in1, $in2) = @ARGV;
+
+open(IN1, " < $in1");
+open(IN2, " < $in2");
+my $header = <IN1>;
+chomp($header);
+my ($m, $n) = split(/ /, $header);
+$header = <IN2>;
+chomp($header);
+my($n2, $o) = split(/ /, $header);
+die "error in sizes" unless $n == $n2;
+my @A;
+while(<IN1>) {
+	chomp();
+	my @line = split / /;
+	push @A, [@line];
+}
+close(IN1);
+my @B;
+while(<IN2>) {
+	chomp();
+	my @line = split / /;
+	push @B, [@line];
+}
+close(IN2);
+
+my @C;
+
+my ($i, $j, $k);
+foreach $i (0..($m-1)) {
+	push @C, [];
+	foreach $j (0..($o-1)) {
+		my $sum = 0;
+		foreach $k (0..($n-1)) {
+			$sum += $A[$i][$k] * $B[$k][$j];
+		}
+		$C[$i][$j] = $sum;
+	}
+}
+
+open(OUT, "> $out");
+print OUT "$m $o\n";
+foreach(@C) {
+	print OUT join(" ", @{$_})."\n";
+}
+close(OUT);

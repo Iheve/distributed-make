@@ -1,0 +1,7 @@
+
+cet exemple génère une vidéo à partir d'un fichier blender compressé.
+
+outils utilisés :
+	- blender
+	- unzip
+	- convert (appartient à Imagemagick)

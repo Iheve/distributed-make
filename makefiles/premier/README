@@ -1,0 +1,6 @@
+
+deux makefiles sont fournis ici pour calculer une liste de nombres premiers.
+
+il est possible de changer la valeur limite facilement avec un editeur de texte.
+
+ne pas oublier -lm lors de l'edition de liens.
