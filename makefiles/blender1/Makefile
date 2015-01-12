@@ -344,4 +344,4 @@ cube_anim.blend : cube_anim.zip
 	rm -f cube_anim.blend ; unzip cube_anim.zip
 
 clean:
-	rm -f *.jpg *.mpg *.blend
+	rm -f *.png *.mpg *.blend
