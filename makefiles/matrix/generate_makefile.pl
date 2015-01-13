@@ -12,6 +12,7 @@ my @c;
 my @p;
 
 print "all: c\n\n";
+print "\ttouch all\n\n";
 #print "all: c check\n\n";
 
 print "check:\ta b\n";
@@ -78,4 +79,4 @@ foreach $b (@b) {
 }
 
 print "clean:\n";
-print "\trm -f @a @b @p @c c check\n";
+print "\trm -f @a @b @p @c c all check\n";
