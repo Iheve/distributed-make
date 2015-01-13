@@ -34,10 +34,7 @@ func readTarget(l string) (target string, deps []string) {
 func readCmd(l string) (cmds []string) {
 	cmds = nil
 	for _, c := range strings.Split(l, ";") {
-		//c := strings.TrimSpace(c)
-		//args := strings.Split(c, " ")
-		//cmds = append(cmds, args)
-		cmds = append(cmds, c)
+		cmds = append(cmds, strings.TrimSpace(c))
 	}
 	return
 }
