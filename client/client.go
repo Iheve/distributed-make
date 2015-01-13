@@ -10,9 +10,10 @@ import (
 	"log"
 	"net/rpc"
 	"os"
+	"time"
 )
 
-func run(host string, todo chan *parser.Task, verbose bool) {
+func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 	client, err := rpc.DialHTTP("tcp", host)
 	if err != nil {
 		log.Println("Can not contact", host, err)
@@ -20,6 +21,7 @@ func run(host string, todo chan *parser.Task, verbose bool) {
 	}
 	for {
 		t := <-todo
+		now := time.Now()
 		var response worker.Response
 		args := new(worker.Args)
 		log.Println(host, "builds", t.Target)
@@ -60,7 +62,9 @@ func run(host string, todo chan *parser.Task, verbose bool) {
 			log.Fatal("Can not create file: ", response.Target.Name, " : ", err)
 		}
 
-		log.Println(host, "has build", t.Target)
+		if showTimes {
+			log.Printf("%s has built %s in %v", host, t.Target, time.Since(now))
+		}
 		t.Done = true
 		if verbose {
 			log.Println(host, "Command done, outputs:")
@@ -96,11 +100,12 @@ func walk(t *parser.Task, todo chan *parser.Task) bool {
 }
 
 func main() {
-	var help, verbose, showGraph bool
+	var help, verbose, showGraph, showTimes bool
 	var hostfileName, makefileName string
 	var nbThread int
 	flag.BoolVar(&help, "help", false, "Display this helper message")
 	flag.BoolVar(&verbose, "verbose", false, "Show outputs of commands")
+	flag.BoolVar(&showTimes, "showtimes", false, "Show in how much time the target has been built")
 	flag.BoolVar(&showGraph, "showgraph", false, "Show the graph of dependencies")
 	flag.StringVar(&hostfileName, "hostfile", "hostfile.cfg", "File listing host running the listener")
 	flag.StringVar(&makefileName, "makefile", "Makefile", "The Makefile")
@@ -130,9 +135,9 @@ func main() {
 
 	todo := make(chan *parser.Task)
 
-	for _, host := range hosts {
-		for i := 0; i < nbThread; i++ {
-			go run(host, todo, verbose)
+	for i := 0; i < nbThread; i++ {
+		for _, host := range hosts {
+			go run(host, todo, verbose, showTimes)
 		}
 	}
 
