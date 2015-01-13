@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/Iheve/distributed-make/config"
 	"github.com/Iheve/distributed-make/parser"
 	"github.com/Iheve/distributed-make/worker"
@@ -43,9 +44,15 @@ func run(host string, todo chan *parser.Task, verbose bool) {
 		//Synchronous call
 		err := client.Call("Worker.Output", args, &response)
 		if err != nil {
-			log.Println(host, " RPC call error, target ", t.Target, " will be rebuilt:", err)
-			todo <- t
-			return
+			s := fmt.Sprintf("%v", err)
+			if s == "unexpected EOF" {
+				log.Println("Contact lost with ", host)
+				log.Println(t.Target, "will be rebuilt.")
+				log.Println(host, "will not receive job anymore.")
+				todo <- t
+				return
+			}
+			log.Fatal(host, " failed to build target ", t.Target, ":", err)
 		}
 		//Unpack target
 		err = ioutil.WriteFile(response.Target.Name, response.Target.Content, response.Target.Mode)
