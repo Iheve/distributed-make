@@ -49,7 +49,7 @@ func checkModificationDate(head *Task) bool {
 	if head == nil {
 		return true
 	}
-	fileTarget, err := os.Stat(head.Target);
+	fileTarget, err := os.Stat(head.Target)
 	if err == nil {
 		isRecent := true
 		for _, son := range head.Sons {
@@ -58,12 +58,12 @@ func checkModificationDate(head *Task) bool {
 					isRecent = false
 					continue
 				}
-				fileDependency, err := os.Stat(son.Target);
+				fileDependency, err := os.Stat(son.Target)
 				if err != nil {
 					isRecent = false
 					continue
 				}
-				if (fileTarget.ModTime().Before(fileDependency.ModTime())){
+				if fileTarget.ModTime().Before(fileDependency.ModTime()) {
 					isRecent = false
 					continue
 				}
@@ -82,7 +82,6 @@ func checkModificationDate(head *Task) bool {
 	}
 	return false
 }
-
 
 func linkTasks(tasks map[string]*Task) {
 	for _, t := range tasks {
