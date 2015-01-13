@@ -27,12 +27,6 @@ func Parse(filename string) (hosts []string) {
 			continue
 		}
 
-		if !strings.Contains(scanner.Text(), ":") {
-			// Check if the line as the good syntax
-			log.Fatal("Invalid line : can't find separator ':' in line : ", scanner.Text())
-			continue
-		}
-
 		hosts = append(hosts, readLine(scanner.Text()))
 	}
 
@@ -53,9 +47,13 @@ func readLine(l string) (host string) {
 	}
 
 	// If there is an empty port number, we use the default one (== 4242)
-	port, _ = strconv.Atoi(c[1])
-	if port == 0 {
+	if !strings.Contains(l, ":") {
 		port = defaultPort
+	} else {
+		port, _ = strconv.Atoi(c[1])
+		if port == 0 {
+			port = defaultPort
+		}
 	}
 
 	host = hostname + ":" + strconv.Itoa(port)
