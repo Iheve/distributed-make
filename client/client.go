@@ -6,6 +6,7 @@ import (
 	"github.com/Iheve/distributed-make/config"
 	"github.com/Iheve/distributed-make/parser"
 	"github.com/Iheve/distributed-make/worker"
+	"github.com/nsf/termbox-go"
 	"io/ioutil"
 	"log"
 	"net/rpc"
@@ -13,7 +14,9 @@ import (
 	"time"
 )
 
-func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
+var running, finished chan string
+
+func run(host string, todo chan *parser.Task, verbose, showTimes, pretty bool) {
 	client, err := rpc.DialHTTP("tcp", host)
 	if err != nil {
 		log.Println("Can not contact", host, err)
@@ -21,10 +24,14 @@ func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 	}
 	for {
 		t := <-todo
+		if pretty {
+			running <- fmt.Sprintf("%v:%v", host, t.Target)
+		} else {
+			log.Println(host, "builds", t.Target)
+		}
 		now := time.Now()
 		var response worker.Response
 		args := new(worker.Args)
-		log.Println(host, "builds", t.Target)
 		args.Target = t.Target
 		args.Cmds = t.Cmds
 		//Pack dependencies
@@ -72,6 +79,9 @@ func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 				log.Println("\n", s)
 			}
 		}
+		if pretty {
+			finished <- fmt.Sprintf("%v:%v", host, t.Target)
+		}
 	}
 }
 
@@ -99,12 +109,68 @@ func walk(t *parser.Task, todo chan *parser.Task) bool {
 	return false
 }
 
+func writeString(x, y int, s string) {
+	for i, r := range s {
+		termbox.SetCell(x+i, y, r, termbox.ColorWhite, termbox.ColorBlack)
+	}
+}
+
+func writeList(x, y int, l []string) {
+	for i, s := range l {
+		writeString(x, y+i, s)
+	}
+}
+
+func events(c chan int) {
+	for {
+		ev := termbox.PollEvent()
+		if ev.Key == termbox.KeyEsc {
+			c <- 0
+		}
+
+	}
+}
+
+func display() {
+	err := termbox.Init()
+	if err != nil {
+		panic(err)
+	}
+	defer termbox.Close()
+
+	quit := make(chan int)
+
+	go events(quit)
+
+	var l []string = nil
+	for {
+		select {
+		case j := <-running:
+			l = append(l, j)
+		case j := <-finished:
+			for i := range l {
+				if l[i] == j {
+					l = append(l[:i], l[i+1:]...)
+					break
+				}
+			}
+		case <-quit:
+			termbox.Close()
+			log.Fatal("User stop")
+		}
+		termbox.Clear(termbox.ColorWhite, termbox.ColorBlack)
+		writeList(0, 0, l)
+		termbox.Flush()
+	}
+}
+
 func main() {
-	var help, verbose, showGraph, showTimes bool
+	var help, verbose, showGraph, showTimes, pretty bool
 	var hostfileName, makefileName string
 	var nbThread int
 	flag.BoolVar(&help, "help", false, "Display this helper message")
 	flag.BoolVar(&verbose, "verbose", false, "Show outputs of commands")
+	flag.BoolVar(&pretty, "pretty", false, "Display a pretty output")
 	flag.BoolVar(&showTimes, "showtimes", false, "Show in how much time the target has been built")
 	flag.BoolVar(&showGraph, "showgraph", false, "Show the graph of dependencies")
 	flag.StringVar(&hostfileName, "hostfile", "hostfile.cfg", "File listing host running the listener")
@@ -134,11 +200,18 @@ func main() {
 	log.Println("Done")
 
 	todo := make(chan *parser.Task)
+	running = make(chan string, 1000)
+	finished = make(chan string, 1000)
 
 	for i := 0; i < nbThread; i++ {
 		for _, host := range hosts {
-			go run(host, todo, verbose, showTimes)
+			go run(host, todo, verbose, showTimes, pretty)
 		}
+	}
+
+	if pretty {
+		go display()
+		defer termbox.Close()
 	}
 
 	for !walk(head, todo) {
