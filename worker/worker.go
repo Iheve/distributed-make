@@ -131,13 +131,16 @@ func (t *Worker) Output(args *Args, response *Response) error {
 	}
 	//Pack target
 	response.Target.Name = args.Target
-	info, _ := os.Stat(dir + args.Target)
-	response.Target.Mode = info.Mode()
 	response.Target.Content, err = ioutil.ReadFile(dir + args.Target)
 	if err != nil {
 		log.Println("Cant read file: ", args.Target, " : ", err)
 		return err
 	}
+	info, _ := os.Stat(dir + args.Target)
+	response.Target.Mode = info.Mode()
+
+	//Rm temp dir
+	os.RemoveAll(dir)
 
 	return nil
 }

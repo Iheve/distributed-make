@@ -31,13 +31,13 @@ func run(host string, todo chan *parser.Task, verbose bool) {
 			}
 			var f worker.File
 			f.Name = d
-			info, _ := os.Stat(d)
-			f.Mode = info.Mode()
 			var err error
 			f.Content, err = ioutil.ReadFile(d)
 			if err != nil {
 				log.Fatal("Cant read file: ", d, " : ", err)
 			}
+			info, _ := os.Stat(d)
+			f.Mode = info.Mode()
 			args.Deps = append(args.Deps, f)
 		}
 		//Synchronous call
