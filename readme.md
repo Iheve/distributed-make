@@ -40,3 +40,28 @@ ensipc101:4242
 ensipc102:4242
 ```
 * Run the client with `$GOHOME/bin/client --hostfile /tmp/hostfile`
+
+## Generate config host file
+* Use the get_host.py script in folder script/
+* Basic use is something like:
+```
+./get_host.py -f /tmp/hostfile
+```
+You will generate two files : /tmp/hostfile and /tmp/hostfile.cfg
+
+* You can choose the range of EnsimagPC:
+```
+./get_host.py -a 20 -b 100
+```
+* You can choose a list of port for the client connection:
+```
+./get_host.py -p 4242,4343,4444
+```
+The list of ports need to be separate with comma.
+
+* You can combine all of these options in order to get what you want
+
+```
+./get_host.py -h
+```
+Can help you ;-)
