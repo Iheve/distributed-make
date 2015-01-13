@@ -97,11 +97,13 @@ func walk(t *parser.Task, todo chan *parser.Task) bool {
 func main() {
 	var help, verbose, showGraph bool
 	var hostfileName, makefileName string
+	var nbThread int
 	flag.BoolVar(&help, "help", false, "Display this helper message")
 	flag.BoolVar(&verbose, "verbose", false, "Show outputs of commands")
 	flag.BoolVar(&showGraph, "showgraph", false, "Show the graph of dependencies")
 	flag.StringVar(&hostfileName, "hostfile", "hostfile.cfg", "File listing host running the listener")
 	flag.StringVar(&makefileName, "makefile", "Makefile", "The Makefile")
+	flag.IntVar(&nbThread, "nbthread", 1, "Number of thread per worker")
 	flag.Parse()
 
 	if help {
@@ -128,7 +130,9 @@ func main() {
 	todo := make(chan *parser.Task)
 
 	for _, host := range hosts {
-		go run(host, todo, verbose)
+		for i := 0; i < nbThread; i++ {
+			go run(host, todo, verbose)
+		}
 	}
 
 	for !walk(head, todo) {
