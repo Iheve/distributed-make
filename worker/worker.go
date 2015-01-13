@@ -37,7 +37,7 @@ func execute(cmd, dir string, env []string) (outCmd []byte, err error) {
 type Worker int
 
 func (t *Worker) Output(args *Args, response *Response) error {
-	log.Println("Building target: ", args.Target)
+	log.Println("Building target:", args.Target)
 	//Create temp dir
 	dir, err := ioutil.TempDir("", "dmake")
 	if err != nil {
@@ -68,13 +68,12 @@ func (t *Worker) Output(args *Args, response *Response) error {
 	}
 	//Run commands
 	for _, cmd := range args.Cmds {
+		log.Println(cmd)
 		out, err := execute(cmd, dir, env)
-		response.Output = append(response.Output, fmt.Sprintf("%s", out))
-		log.Println(string(out))
-		if err == nil {
-		} else {
-			log.Println("Command failed with error ", err, " output:")
-			log.Println(string(out))
+		response.Output = append(response.Output, fmt.Sprintf(cmd, "\n%s", out))
+		if err != nil {
+			log.Println(cmd, "failed:")
+			log.Print(string(out))
 			return errors.New(fmt.Sprintf("%v, output: %s", err, out))
 		}
 	}
@@ -82,7 +81,7 @@ func (t *Worker) Output(args *Args, response *Response) error {
 	response.Target.Name = args.Target
 	response.Target.Content, err = ioutil.ReadFile(dir + args.Target)
 	if err != nil {
-		log.Println("Cant read file: ", args.Target, " : ", err)
+		log.Println("Cant read file:", args.Target, ": ", err)
 		return err
 	}
 	info, _ := os.Stat(dir + args.Target)

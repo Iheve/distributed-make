@@ -60,6 +60,7 @@ func run(host string, todo chan *parser.Task, verbose bool) {
 			log.Fatal("Can not create file: ", response.Target.Name, " : ", err)
 		}
 
+		log.Println(host, "has build", t.Target)
 		t.Done = true
 		if verbose {
 			log.Println(host, "Command done, outputs:")

@@ -31,14 +31,6 @@ func readTarget(l string) (target string, deps []string) {
 	return
 }
 
-func readCmd(l string) (cmds []string) {
-	cmds = nil
-	for _, c := range strings.Split(l, ";") {
-		cmds = append(cmds, strings.TrimSpace(c))
-	}
-	return
-}
-
 func newTask(target string, deps []string, cmds []string) *Task {
 	task := new(Task)
 	task.Target = target
@@ -85,7 +77,7 @@ func Parse(filename string) (head *Task, err error) {
 				log.Fatal(err)
 				return
 			}
-			cmds = append(cmds, readCmd(scanner.Text())...)
+			cmds = append(cmds, strings.TrimSpace(scanner.Text()))
 		} else {
 			if targetSet {
 				tasks[target] = newTask(target, deps, cmds)
