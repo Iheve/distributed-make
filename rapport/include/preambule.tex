@@ -1,0 +1,103 @@
+% des paquetages indispensables, qui ajoutent des fonctionnalites
+%\usepackage[latin1]{inputenc}
+\usepackage[utf8]{inputenc}
+%\usepackage[french]{babel}
+%\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{eurosym}
+\usepackage{pdfpages}
+\usepackage{tikz}
+%\usepackage[yyyymmdd,hhmmss]{datetime}
+%\usepackage{dblfloatfix}
+
+%\usepackage{float}
+%\floatstyle{boxed}
+%\restylefloat{figure}
+
+%configuration de listings pour l'affichage du code
+\lstset{
+    language=ruby,
+    basicstyle=\ttfamily\small, %
+    identifierstyle=\color{red}, %
+    keywordstyle=\color{blue}, %
+    stringstyle=\color{black!60}, %
+    commentstyle=\it\color{black!50}, %
+    columns=flexible, %
+    tabsize=3, %
+    extendedchars=true, %
+    showspaces=false, %
+    showstringspaces=false, %
+    %numbers=left, %
+    %numberstyle=\tiny, %
+    breaklines=true, %
+    breakautoindent=true, %
+    captionpos=b,
+    frame=single
+}
+
+% On fera des listes a puce et non a tiret.
+%\renewcommand{\FrenchLabelItem}{\textbullet}
+
+\newtheorem{theoreme}{Th\'{e}or\`{e}me}
+\newtheorem{definition}{D\'{e}finition}
+\newtheorem{exercice}{Exercice}
+
+\newcommand{\tab}{\hspace*{\parindent}}
+
+%Definition de quelques commandes utiles en maths :
+
+% R et N
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\C}{\mathbb{C}}
+% derive partielle et congruence
+\newcommand{\drond}{\partial}
+\newcommand{\congru}{\equiv}
+% blocs parenthese, valeur absolue, norme, crochets, accolades
+\newcommand{\abs}[1]{\left\lvert#1\right\rvert}
+\newcommand{\norm}[1]{\left\lVert#1\right\lVert}
+\newcommand{\braces}[1]{\left(#1\right)}
+\newcommand{\croch}[1]{\left[#1\right]}
+\newcommand{\cbraces}[1]{\left\{#1\right\}}
+% blocs parties entieres superieur et inferieur
+\newcommand{\entsup}[1]{\left\lceil#1\right\rceil}
+\newcommand{\entinf}[1]{\left\lfloor#1\right\rfloor}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+\newcommand{\gitInfo}{
+    \IfFileExists{.compil/gitfile.tex}
+    {
+        \input{.compil/gitfile.tex}
+        \begin{tabular}{|ll|}
+            \hline
+            Commit  & \GITAbrHash \\
+            Date    & \GITAuthorDate \\
+            Author  & \GITAuthorName \\
+            \hline
+            Build date    & \today \\
+            Build time    & \currenttime \\
+            \hline
+        \end{tabular}
+    }{
+        \begin{tabular}{|ll|}
+            \hline
+            No git info \\
+            \hline
+            Build date    & \today \\
+            Build time    & \currenttime \\
+            \hline
+        \end{tabular}
+    }
+}
+
+%\setcounter{secnumdepth}{3}
+\setlength{\columnsep}{10mm}
