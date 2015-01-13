@@ -29,7 +29,7 @@ type Response struct {
 }
 
 func execute(cmd, dir string, env []string) (outCmd []byte, err error) {
-	if strings.ContainsAny(cmd, ";><$`") {
+	if strings.ContainsAny(cmd, ";><$`&") {
 		c := exec.Command("bash", "-c", cmd)
 		c.Dir = dir
 		c.Env = env
