@@ -45,7 +45,7 @@ func run(host string, todo chan *parser.Task, verbose bool) {
 		err := client.Call("Worker.Output", args, &response)
 		if err != nil {
 			s := fmt.Sprintf("%v", err)
-			if s == "unexpected EOF" {
+			if s == "unexpected EOF" || s == "connection is shut down" {
 				log.Println("Contact lost with ", host)
 				log.Println(t.Target, "will be rebuilt.")
 				log.Println(host, "will not receive job anymore.")
