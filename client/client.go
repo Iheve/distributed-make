@@ -43,7 +43,9 @@ func run(host string, todo chan *parser.Task, verbose bool) {
 		//Synchronous call
 		err := client.Call("Worker.Output", args, &response)
 		if err != nil {
-			log.Fatal(host, "RPC call error:", err)
+			log.Println(host, " RPC call error, target ", t.Target, " will be rebuilt:", err)
+			todo <- t
+			return
 		}
 		//Unpack target
 		err = ioutil.WriteFile(response.Target.Name, response.Target.Content, response.Target.Mode)
