@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -74,7 +75,7 @@ func (t *Worker) Output(args *Args, response *Response) error {
 		} else {
 			log.Println("Command failed with error ", err, " output:")
 			log.Println(string(out))
-			return err
+			return errors.New(fmt.Sprintf("%v, output: %s", err, out))
 		}
 	}
 	//Pack target
