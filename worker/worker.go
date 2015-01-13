@@ -28,12 +28,11 @@ type Response struct {
 	Target File
 }
 
-func execute(cmd, dir string) (outCmd []byte, err error) {
+func execute(cmd, dir string, env []string) (outCmd []byte, err error) {
 	if strings.ContainsAny(cmd, ";><$`") {
 		c := exec.Command("bash", "-c", cmd)
 		c.Dir = dir
-		c.Env = os.Environ()
-		c.Env = append(c.Env, "PWD="+dir)
+		c.Env = env
 		return c.CombinedOutput()
 	}
 	var output bytes.Buffer
@@ -47,8 +46,7 @@ func execute(cmd, dir string) (outCmd []byte, err error) {
 		args := strings.Split(oneCmd, " ")
 		c := exec.Command(args[0], args[1:]...)
 		c.Dir = dir
-		c.Env = os.Environ()
-		c.Env = append(c.Env, "PWD="+dir)
+		c.Env = env
 		cmds = append(cmds, c)
 	}
 
@@ -98,6 +96,16 @@ func (t *Worker) Output(args *Args, response *Response) error {
 		return err
 	}
 	dir = dir + "/"
+
+	//Calculate new environment (set PWD)
+	env := os.Environ()
+	for i := range env {
+		if strings.HasPrefix(env[i], "PWD") {
+			env[i] = "PWD=" + dir
+			break
+		}
+	}
+
 	//Unpack dependencies
 	for _, f := range args.Deps {
 		if f.Name == "" {
@@ -111,8 +119,9 @@ func (t *Worker) Output(args *Args, response *Response) error {
 	}
 	//Run commands
 	for _, cmd := range args.Cmds {
-		out, err := execute(cmd, dir)
+		out, err := execute(cmd, dir, env)
 		response.Output = append(response.Output, fmt.Sprintf("%s", out))
+		log.Println(string(out))
 		if err == nil {
 		} else {
 			log.Println("Command failed with error ", err, " output:")
