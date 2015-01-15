@@ -25,7 +25,9 @@ var pretty bool
 func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 	client, err := rpc.DialHTTP("tcp", host)
 	if err != nil {
-		log.Println("Can not contact", host, err)
+		if !pretty {
+			log.Println("Can not contact", host, err)
+		}
 		return
 	}
 	for {
@@ -60,6 +62,10 @@ func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 		//Synchronous call
 		err := client.Call("Worker.Output", args, &response)
 		if err != nil {
+			if pretty {
+				pretty = false
+				termbox.Close()
+			}
 			s := fmt.Sprintf("%v", err)
 			if s == "unexpected EOF" || s == "connection is shut down" {
 				log.Println("Contact lost with ", host)
@@ -157,7 +163,6 @@ func display() {
 	if err != nil {
 		panic(err)
 	}
-	defer termbox.Close()
 
 	quit := make(chan int)
 
@@ -180,7 +185,7 @@ func display() {
 			log.Println("Exiting pretty mode")
 			return
 		default:
-			time.Sleep(1e9)
+			time.Sleep(1e8)
 		}
 		termbox.Clear(termbox.ColorWhite, termbox.ColorBlack)
 		writeList(0, 0, l)
