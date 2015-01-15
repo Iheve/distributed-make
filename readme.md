@@ -6,6 +6,9 @@ You should consider adding `GOPATH=~/go; export $GOPATH` to your .bashrc
 
 ## Install
 
+Run `go get github.com/Iheve/distributed-make/...`.
+
+If the previous command did not work, you can try the following:
 * Check that your $GOPATH is set. (If not, run `mkdir ~/go; GOPATH=~/go; export $GOPATH`)
 * Run `mkdir -p $GOPATH/src/github.com/Iheve`
 * Run `cd $GOPATH/src/github.com/Iheve`
@@ -13,35 +16,43 @@ You should consider adding `GOPATH=~/go; export $GOPATH` to your .bashrc
 
 ## Build
 
-* `go install github.com/Iheve/distributed-make/listener`
-* `go install github.com/Iheve/distributed-make/client`
+Run `go install github.com/Iheve/distributed-make/...`
 
-## Run
 
-* launch the server with `$GOPATH/bin/listener`
-* launch the client with `$GOPATH/bin/client`
+## Configuration
 
-## Deploy
-* `go install github.com/Iheve/distributed-make/listener`
-* List hosts in `/tmp/hosts`, something like:
+### Hostfile for the client
+
+The client needs a list of the servers (listeners). The list looks like this:
+```
+ensipc101:4242
+ensipc100
+ensipc102:4243
+```
+Note that if the default port is 4242.
+
+The default hostfile is `hostfile.cfg`. However, it is convenient to put it in
+`/tmp/hostfile.cfg` and use the flag `--hostfile /tmp/hostfile.cfg`
+
+
+
+### Hostfile for taktuk
+
+We use taktuk to deploy the listeners on several computers.
+Taktuk needs a hostfile too. It looks like this:
 ```
 ensipc100
 ensipc101
 ensipc102
 ```
-* deploy with taktuk:
-```
-./taktuk -s -o connector -o status -f /tmp/hosts broadcast exec [ ~/go/bin/listener ]
-```
-* List listeners in `/tmp/hostfile`, something like:
-```
-ensipc100:4242
-ensipc101:4242
-ensipc102:4242
-```
-* Run the client with `$GOHOME/bin/client --hostfile /tmp/hostfile`
 
-## Generate config host file
+Note that if you are running all the listeners on port 4242, you can use the
+same hostfile for taktuk and the client.
+
+### Generating hostfiles
+
+Some scripts will help you to generate config files:
+
 * Use the get_host.py script in folder script/
 * Basic use is something like:
 ```
@@ -49,7 +60,7 @@ ensipc102:4242
 ```
 You will generate two files : /tmp/hostfile and /tmp/hostfile.cfg
 
-* You can choose the range of EnsimagPC:
+* You can choose the range of Ensimag PC:
 ```
 ./get_host.py -a 20 -b 100
 ```
@@ -65,3 +76,31 @@ The list of ports need to be separate with comma.
 ./get_host.py -h
 ```
 Can help you ;-)
+
+## Run
+
+### On a single machine
+
+* Don't forget to keep the binaries up to date : `go install github.com/Iheve/distributed-make/...`
+* Launch a server with `$GOPATH/bin/listener`
+* Create the hostfile.cfg with `echo localhost > /tmp/hostfile.cfg`
+* Launch the client with `$GOPATH/bin/client --hostfile /tmp/hostfile.cfg`
+
+You can explore the options by using the --help flag.
+
+### Deploy on several computers at the Ensimag
+
+* Go to the `script/` folder
+* Run `./start.sh 100 200` (it will run the listener on ensipc100-ensipc200)
+* In an other terminal, launch the client with `$GOPATH/bin/client --hostfile /tmp/hostfile.cfg` in
+    the folder where the makefile is
+
+To stop the servers, run `./stop.sh`
+
+## Taktuk deployment
+
+For more fancy deployment...
+* Deploy with taktuk:
+```
+./taktuk -s -o connector -o status -f /tmp/hostfile broadcast exec [ ~/go/bin/listener ]
+```
