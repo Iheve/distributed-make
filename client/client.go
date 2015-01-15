@@ -215,7 +215,18 @@ func display() {
 		termbox.Clear(termbox.ColorWhite, termbox.ColorBlack)
 		var l []string
 		for _, j := range runningJobs {
-			l = append(l, fmt.Sprintf("%s:%v", j.name, time.Since(j.startTime)))
+			timeSince := time.Since(j.startTime)
+			var divider float32
+			var unit string
+			if timeSince > time.Second {
+				divider = float32(time.Second)
+				unit = "s"
+			} else {
+				divider = float32(time.Millisecond)
+				unit = "ms"
+			}
+			var duration = float32(timeSince) / divider
+			l = append(l, fmt.Sprintf("%s:%.3f%s", j.name, duration, unit))
 		}
 		writeList(0, "Running jobs", l...)
 		l = nil
