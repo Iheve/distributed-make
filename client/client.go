@@ -15,8 +15,9 @@ import (
 )
 
 var running, finished chan string
+var pretty bool
 
-func run(host string, todo chan *parser.Task, verbose, showTimes, pretty bool) {
+func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 	client, err := rpc.DialHTTP("tcp", host)
 	if err != nil {
 		log.Println("Can not contact", host, err)
@@ -125,6 +126,7 @@ func events(c chan int) {
 	for {
 		ev := termbox.PollEvent()
 		if ev.Key == termbox.KeyEsc {
+			pretty = false
 			c <- 0
 		}
 
@@ -156,7 +158,8 @@ func display() {
 			}
 		case <-quit:
 			termbox.Close()
-			log.Fatal("User stop")
+			log.Println("Exiting pretty mode")
+			return
 		}
 		termbox.Clear(termbox.ColorWhite, termbox.ColorBlack)
 		writeList(0, 0, l)
@@ -165,7 +168,7 @@ func display() {
 }
 
 func main() {
-	var help, verbose, showGraph, showTimes, pretty bool
+	var help, verbose, showGraph, showTimes bool
 	var hostfileName, makefileName string
 	var nbThread int
 	flag.BoolVar(&help, "help", false, "Display this helper message")
@@ -205,16 +208,19 @@ func main() {
 
 	for i := 0; i < nbThread; i++ {
 		for _, host := range hosts {
-			go run(host, todo, verbose, showTimes, pretty)
+			go run(host, todo, verbose, showTimes)
 		}
 	}
 
 	if pretty {
 		go display()
-		defer termbox.Close()
 	}
 
 	for !walk(head, todo) {
+	}
+
+	if pretty {
+		termbox.Close()
 	}
 
 }
