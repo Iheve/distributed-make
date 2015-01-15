@@ -14,7 +14,12 @@ import (
 	"time"
 )
 
-var running, finished chan string
+type job struct {
+	name      string
+	startTime time.Time
+}
+
+var running, finished chan job
 var pretty bool
 
 func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
@@ -25,8 +30,9 @@ func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 	}
 	for {
 		t := <-todo
+		id := job{fmt.Sprintf("%v:%v", host, t.Target), time.Now()}
 		if pretty {
-			running <- fmt.Sprintf("%v:%v", host, t.Target)
+			running <- id
 		} else {
 			log.Println(host, "builds", t.Target)
 		}
@@ -81,7 +87,7 @@ func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 			}
 		}
 		if pretty {
-			finished <- fmt.Sprintf("%v:%v", host, t.Target)
+			finished <- id
 		}
 	}
 }
@@ -122,13 +128,14 @@ func walk(t *parser.Task, todo chan *parser.Task) (bool, time.Time) {
 	return false, time.Unix(0, 0)
 }
 
-func writeString(x, y int, s string) {
+func writeString(x, y int, j job) {
+	s := fmt.Sprintf("%s %v", j.name, time.Since(j.startTime))
 	for i, r := range s {
 		termbox.SetCell(x+i, y, r, termbox.ColorWhite, termbox.ColorBlack)
 	}
 }
 
-func writeList(x, y int, l []string) {
+func writeList(x, y int, l []job) {
 	for i, s := range l {
 		writeString(x, y+i, s)
 	}
@@ -156,7 +163,7 @@ func display() {
 
 	go events(quit)
 
-	var l []string = nil
+	var l []job = nil
 	for {
 		select {
 		case j := <-running:
@@ -172,6 +179,8 @@ func display() {
 			termbox.Close()
 			log.Println("Exiting pretty mode")
 			return
+		default:
+			time.Sleep(1e9)
 		}
 		termbox.Clear(termbox.ColorWhite, termbox.ColorBlack)
 		writeList(0, 0, l)
@@ -219,8 +228,8 @@ func main() {
 	log.Println("Done")
 
 	todo := make(chan *parser.Task)
-	running = make(chan string, 1000)
-	finished = make(chan string, 1000)
+	running = make(chan job, 1000)
+	finished = make(chan job, 1000)
 
 	for i := 0; i < nbThread; i++ {
 		for _, host := range hosts {
