@@ -19,13 +19,19 @@ type job struct {
 	startTime time.Time
 }
 
-var running, finished chan job
 var pretty bool
+
+var runningJobs, doneJobs []job
+var running, finished chan job = make(chan job, 1000), make(chan job, 1000)
+var hosts, failedHosts []string
+var addHost, rmHost chan string = make(chan string, 1000), make(chan string, 1000)
 
 func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 	client, err := rpc.DialHTTP("tcp", host)
 	if err != nil {
-		if !pretty {
+		if pretty {
+			rmHost <- host
+		} else {
 			log.Println("Can not contact", host, err)
 		}
 		return
@@ -53,6 +59,10 @@ func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 			var err error
 			f.Content, err = ioutil.ReadFile(d)
 			if err != nil {
+				if pretty {
+					pretty = false
+					termbox.Close()
+				}
 				log.Fatal("Cant read file: ", d, " : ", err)
 			}
 			info, _ := os.Stat(d)
@@ -62,23 +72,31 @@ func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 		//Synchronous call
 		err := client.Call("Worker.Output", args, &response)
 		if err != nil {
+			s := fmt.Sprintf("%v", err)
+			if s == "unexpected EOF" || s == "connection is shut down" {
+				if pretty {
+					rmHost <- host
+				} else {
+					log.Println("Contact lost with ", host)
+					log.Println(t.Target, "will be rebuilt.")
+					log.Println(host, "will not receive job anymore.")
+				}
+				todo <- t
+				return
+			}
 			if pretty {
 				pretty = false
 				termbox.Close()
-			}
-			s := fmt.Sprintf("%v", err)
-			if s == "unexpected EOF" || s == "connection is shut down" {
-				log.Println("Contact lost with ", host)
-				log.Println(t.Target, "will be rebuilt.")
-				log.Println(host, "will not receive job anymore.")
-				todo <- t
-				return
 			}
 			log.Fatal(host, " failed to build target ", t.Target, ":", err)
 		}
 		//Unpack target
 		err = ioutil.WriteFile(response.Target.Name, response.Target.Content, response.Target.Mode)
 		if err != nil {
+			if pretty {
+				pretty = false
+				termbox.Close()
+			}
 			log.Fatal("Can not create file: ", response.Target.Name, " : ", err)
 		}
 
@@ -134,27 +152,52 @@ func walk(t *parser.Task, todo chan *parser.Task) (bool, time.Time) {
 	return false, time.Unix(0, 0)
 }
 
-func writeString(x, y int, j job) {
-	s := fmt.Sprintf("%s %v", j.name, time.Since(j.startTime))
+func events() {
+	for pretty {
+		ev := termbox.PollEvent()
+		if ev.Key == termbox.KeyEsc {
+			pretty = false
+		}
+	}
+}
+
+func updateStatus() {
+	for pretty {
+		select {
+		case host := <-addHost:
+			hosts = append(hosts, host)
+		case host := <-rmHost:
+			failedHosts = append(failedHosts, host)
+			for i, h := range hosts {
+				if h == host {
+					hosts = append(hosts[:i], hosts[i+1:]...)
+					break
+				}
+			}
+		case job := <-running:
+			runningJobs = append(runningJobs, job)
+		case job := <-finished:
+			doneJobs = append(doneJobs, job)
+			for i, j := range runningJobs {
+				if j == job {
+					runningJobs = append(runningJobs[:i], runningJobs[i+1:]...)
+					break
+				}
+			}
+		}
+	}
+}
+
+func writeString(x, y int, s string) {
 	for i, r := range s {
 		termbox.SetCell(x+i, y, r, termbox.ColorWhite, termbox.ColorBlack)
 	}
 }
 
-func writeList(x, y int, l []job) {
+func writeList(x int, title string, l ...string) {
+	writeString(x, 0, title)
 	for i, s := range l {
-		writeString(x, y+i, s)
-	}
-}
-
-func events(c chan int) {
-	for {
-		ev := termbox.PollEvent()
-		if ev.Key == termbox.KeyEsc {
-			pretty = false
-			c <- 0
-		}
-
+		writeString(x, i+1, s)
 	}
 }
 
@@ -163,32 +206,25 @@ func display() {
 	if err != nil {
 		panic(err)
 	}
+	defer termbox.Close()
 
-	quit := make(chan int)
+	go events()
+	go updateStatus()
 
-	go events(quit)
-
-	var l []job = nil
-	for {
-		select {
-		case j := <-running:
-			l = append(l, j)
-		case j := <-finished:
-			for i := range l {
-				if l[i] == j {
-					l = append(l[:i], l[i+1:]...)
-					break
-				}
-			}
-		case <-quit:
-			termbox.Close()
-			log.Println("Exiting pretty mode")
-			return
-		default:
-			time.Sleep(1e8)
-		}
+	for pretty {
 		termbox.Clear(termbox.ColorWhite, termbox.ColorBlack)
-		writeList(0, 0, l)
+		var l []string
+		for _, j := range runningJobs {
+			l = append(l, fmt.Sprintf("%s:%v", j.name, time.Since(j.startTime)))
+		}
+		writeList(0, "Running jobs", l...)
+		l = nil
+		for _, j := range doneJobs {
+			l = append(l, fmt.Sprintf("%s", j.name))
+		}
+		writeList(45, "Done jobs", l...)
+		writeList(75, "Hosts", hosts...)
+		writeList(95, "Failed hosts", failedHosts...)
 		termbox.Flush()
 	}
 }
@@ -233,11 +269,10 @@ func main() {
 	log.Println("Done")
 
 	todo := make(chan *parser.Task)
-	running = make(chan job, 1000)
-	finished = make(chan job, 1000)
 
 	for i := 0; i < nbThread; i++ {
 		for _, host := range hosts {
+			addHost <- host
 			go run(host, todo, verbose, showTimes)
 		}
 	}
