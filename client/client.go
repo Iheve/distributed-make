@@ -86,28 +86,40 @@ func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 	}
 }
 
-func walk(t *parser.Task, todo chan *parser.Task) bool {
+func walk(t *parser.Task, todo chan *parser.Task) (bool, time.Time) {
 	if t.Done {
-		return true
+		fileInfo, _ := os.Stat(t.Target)
+		return true, fileInfo.ModTime()
 	}
 
 	if t.Affected {
-		return false
+		return false, time.Unix(0, 0)
 	}
 
 	res := true
+	mostRecentCreationDate := time.Unix(0, 0)
 	for _, s := range t.Sons {
 		if s != nil {
-			res = walk(s, todo) && res
+			done, creationDateSon := walk(s, todo)
+			res = done && res
+			if res {
+				if mostRecentCreationDate.Before(creationDateSon) {
+					mostRecentCreationDate = creationDateSon
+				}
+			}
 		}
 	}
 
 	if res {
+		if fileInfo, err := os.Stat(t.Target); err == nil && fileInfo.ModTime().After(mostRecentCreationDate) {
+			t.Done = true
+			return true, fileInfo.ModTime()
+		}
 		t.Affected = true
 		todo <- t
 	}
 
-	return false
+	return false, time.Unix(0, 0)
 }
 
 func writeString(x, y int, s string) {
@@ -167,6 +179,10 @@ func display() {
 	}
 }
 
+func first(b bool, t time.Time) bool {
+	return b
+}
+
 func main() {
 	var help, verbose, showGraph, showTimes bool
 	var hostfileName, makefileName string
@@ -216,7 +232,7 @@ func main() {
 		go display()
 	}
 
-	for !walk(head, todo) {
+	for !first(walk(head, todo)) {
 	}
 
 	if pretty {

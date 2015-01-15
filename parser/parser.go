@@ -41,48 +41,6 @@ func newTask(target string, deps []string, cmds []string) *Task {
 	return task
 }
 
-// send true if head is more recent than its targets and recursively go down in
-// the targets to set the field Done to True if a target do not need to be
-// rebuilt (according to the modification date of the target and the ones from
-// its own targets)
-func checkModificationDate(head *Task) bool {
-	if head == nil {
-		return true
-	}
-	fileTarget, err := os.Stat(head.Target)
-	if err == nil {
-		isRecent := true
-		for _, son := range head.Sons {
-			if son != nil {
-				if !checkModificationDate(son) {
-					isRecent = false
-					continue
-				}
-				fileDependency, err := os.Stat(son.Target)
-				if err != nil {
-					isRecent = false
-					continue
-				}
-				if fileTarget.ModTime().Before(fileDependency.ModTime()) {
-					isRecent = false
-					continue
-				}
-			}
-		}
-		if isRecent {
-			log.Println("nothing to do for : ", head.Target)
-			head.Done = true
-			return true
-		}
-		return false
-	} else { // check if some sons may not need to be build again
-		for _, son := range head.Sons {
-			checkModificationDate(son)
-		}
-	}
-	return false
-}
-
 func linkTasks(tasks map[string]*Task) {
 	for _, t := range tasks {
 		for _, d := range t.Deps {
@@ -150,7 +108,6 @@ func Parse(filename string) (head *Task, err error) {
 	}
 
 	linkTasks(tasks)
-	checkModificationDate(head)
 	return
 }
 
