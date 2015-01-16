@@ -49,7 +49,7 @@ func linkTasks(tasks map[string]*Task) {
 	}
 }
 
-func Parse(filename string) (head *Task, err error) {
+func Parse(filename, goal string) (head *Task, err error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -82,7 +82,7 @@ func Parse(filename string) (head *Task, err error) {
 			if targetSet {
 
 				tasks[target] = newTask(target, deps, cmds)
-				if first {
+				if first && (goal == "" || target == goal) {
 					head = tasks[target]
 					first = false
 				}
@@ -147,7 +147,7 @@ func main() {
 		path = os.Args[1]
 	}
 
-	head, err := Parse(path)
+	head, err := Parse(path, "")
 	if err != nil {
 		log.Fatal(err)
 		return

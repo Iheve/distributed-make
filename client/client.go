@@ -246,7 +246,7 @@ func first(b bool, t time.Time) bool {
 
 func main() {
 	var help, verbose, showGraph, showTimes bool
-	var hostfileName, makefileName string
+	var hostfileName, makefileName, target string
 	var nbThread int
 	flag.BoolVar(&help, "help", false, "Display this helper message")
 	flag.BoolVar(&verbose, "verbose", false, "Show outputs of commands")
@@ -255,6 +255,7 @@ func main() {
 	flag.BoolVar(&showGraph, "showgraph", false, "Show the graph of dependencies")
 	flag.StringVar(&hostfileName, "hostfile", "hostfile.cfg", "File listing host running the listener")
 	flag.StringVar(&makefileName, "makefile", "Makefile", "The Makefile")
+	flag.StringVar(&target, "target", "", "Target to execute")
 	flag.IntVar(&nbThread, "nbthread", 1, "Number of thread per worker")
 	flag.Parse()
 
@@ -264,7 +265,7 @@ func main() {
 	}
 
 	log.Println("Parsing the Makefile...")
-	head, err := parser.Parse(makefileName)
+	head, err := parser.Parse(makefileName, target)
 	if err != nil {
 		log.Fatal(err)
 		return
