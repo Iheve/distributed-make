@@ -14,6 +14,27 @@
 \setlength{\parskip}{2mm}
 
 \section{Introduction}
+Ce rapport a pour but de présenter le travail réalisé dans le cadre du projet de systèmes distribués, en présentant notamment, le langage que nous avons utilisé et les algortihmes que nous avons utilisé.
+
+Dans une deuxième partie, nous présenterons les performances de notre application au traves des différents tests que nous avons réalisés. Cette partie se constituera principalement de courbes présentant les résultats.
+
+\section{Partie 1}
+\subsection{Langage}
+Pour réaliser ce projet, nous avons utilisé le langage \textbf{Go}, développé par Google. Go n'est pas présent nativement sur les machines de l'Ensimag, il faut donc installer le compilateur ainsi que les bibliothèques sur sa machine. Cela se réalise facilement en se rendant sur le site \href{http://golang.org/doc/install#download}{golang.org}.
+
+\subsection{Algorithmes}
+Le fonctionnement de notre application de makefile distribués se déroulent en deux parties :
+\begin{itemize}
+\item Lecture et construction de l'arbre de dépendances à partir du Makefile par le maître.
+\item Execution des différentes tâches par les esclaves.
+
+La première étape, va permettre de construire l'abre de dépendance à partir du Makefile.
+% TODO
+
+\end{itemize}
+
+\subsection{Déploiement}
+La méthode pour déployer l'application est entièrement disponible dans le fichier \textit{readme.md} disponible à la racine du projet.
 
 \end{document}
 
