@@ -174,6 +174,12 @@ func updateStatus() {
 					break
 				}
 			}
+			if len(hosts) == 0 {
+				log.Println("No more worker available")
+				pretty = false
+				termbox.Close()
+				os.Exit(2)
+			}
 		case job := <-running:
 			runningJobs = append(runningJobs, job)
 		case job := <-finished:
@@ -279,6 +285,11 @@ func main() {
 	log.Println("Parsing the hostfile...")
 	hosts := config.Parse(hostfileName)
 	log.Println("Done")
+
+	if len(hosts) == 0 {
+		log.Println("No worker available, please add listeners to hostfile")
+		os.Exit(2)
+	}
 
 	todo := make(chan *parser.Task)
 
