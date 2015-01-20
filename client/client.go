@@ -281,10 +281,10 @@ func main() {
 	}
 
 	log.Println("Parsing the hostfile...")
-	hosts := config.Parse(hostfileName)
+	myHosts := config.Parse(hostfileName)
 	log.Println("Done")
 
-	if len(hosts) == 0 {
+	if len(myHosts) == 0 {
 		log.Println("No worker available, please add listeners to hostfile")
 		os.Exit(2)
 	}
@@ -294,7 +294,7 @@ func main() {
 	todo := make(chan *parser.Task)
 
 	for i := 0; i < nbThread; i++ {
-		for _, host := range hosts {
+		for _, host := range myHosts {
 			addHost <- host
 			go run(host, todo, verbose, showTimes)
 		}
@@ -311,4 +311,5 @@ func main() {
 		termbox.Close()
 	}
 
+	fmt.Println(len(hosts))
 }
