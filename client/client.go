@@ -29,9 +29,8 @@ var addHost, rmHost chan string = make(chan string, 1000), make(chan string, 100
 func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 	client, err := rpc.DialHTTP("tcp", host)
 	if err != nil {
-		if pretty {
-			rmHost <- host
-		} else {
+		rmHost <- host
+		if !pretty {
 			log.Println("Can not contact", host, err)
 		}
 		return
@@ -39,9 +38,8 @@ func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 	for {
 		t := <-todo
 		id := job{fmt.Sprintf("%v:%v", host, t.Target), time.Now()}
-		if pretty {
-			running <- id
-		} else {
+		running <- id
+		if !pretty {
 			log.Println(host, "builds", t.Target)
 		}
 		now := time.Now()
@@ -74,9 +72,8 @@ func run(host string, todo chan *parser.Task, verbose, showTimes bool) {
 		if err != nil {
 			s := fmt.Sprintf("%v", err)
 			if s == "unexpected EOF" || s == "connection is shut down" {
-				if pretty {
-					rmHost <- host
-				} else {
+				rmHost <- host
+				if !pretty {
 					log.Println("Contact lost with ", host)
 					log.Println(t.Target, "will be rebuilt.")
 					log.Println(host, "will not receive job anymore.")
@@ -162,7 +159,7 @@ func events() {
 }
 
 func updateStatus() {
-	for pretty {
+	for {
 		select {
 		case host := <-addHost:
 			hosts = append(hosts, host)
@@ -175,9 +172,11 @@ func updateStatus() {
 				}
 			}
 			if len(hosts) == 0 {
+				if pretty {
+					pretty = false
+					termbox.Close()
+				}
 				log.Println("No more worker available")
-				pretty = false
-				termbox.Close()
 				os.Exit(2)
 			}
 		case job := <-running:
@@ -215,7 +214,6 @@ func display() {
 	defer termbox.Close()
 
 	go events()
-	go updateStatus()
 
 	for pretty {
 		termbox.Clear(termbox.ColorWhite, termbox.ColorBlack)
@@ -290,6 +288,8 @@ func main() {
 		log.Println("No worker available, please add listeners to hostfile")
 		os.Exit(2)
 	}
+
+	go updateStatus()
 
 	todo := make(chan *parser.Task)
 
