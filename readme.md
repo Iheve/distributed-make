@@ -1,5 +1,7 @@
 # distributed-make
 
+[![Build Status](https://travis-ci.org/Iheve/distributed-make.svg?branch=master)](https://travis-ci.org/Iheve/distributed-make)
+
 ## Prerequisite
 
 You should consider adding `GOPATH=~/go; export $GOPATH` to your .bashrc
