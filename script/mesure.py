@@ -5,14 +5,14 @@ import subprocess
 from collections import defaultdict
 
 #nbthread = [1,2,4,8,16,32]
-nbmachine = [1]
-nbthread = [1,2,3,4]
-#hosts = ["ensipc101", "ensipc103", "ensipc102", "ensipc104", "ensipc105", "ensipc106",
-#			"ensipc107", "ensipc108", "ensipc109",  "ensipc110", "ensipc111", "ensipc112"]
+nbmachine = [1,2]
+nbthread = [1,2]
+hosts = ["ensipc150", "ensipc151", "ensipc144", "ensipc145", "ensipc149", "ensipc153", "ensipc142"]
 
-hosts = ["localhost"]
+#hosts = ["localhost"]
 start = 101
 fname = "mesures.csv"
+ftmp = "tmp.csv"
 
 fmakefile = "../makefiles/premier"
 
@@ -29,6 +29,10 @@ def moyenne(dict):
 
 	return result
 
+tmp_out = open(ftmp, "wb")
+tmp_out.write("nthreads;temps;nmachine;nrealthreads\n")
+tmp_out.close()
+
 for y in nbmachine:
 	list_hosts = hosts[:y]
 	print("Calculating with " + str(y) + " computers")
@@ -43,7 +47,7 @@ for y in nbmachine:
 	for i in nbthread:
 		print("Calculating for nb thread : " + str(i*y))
 
-		for j in range(1,11):
+		for j in range(1,3):
 			print("Calculous for " + str(j))
 
 			# Make clean
@@ -71,6 +75,21 @@ for y in nbmachine:
 
 			result[out.strip()].append(float(err.split("\n")[-2]))
 
+			# Write in tmp file
+			tmp_out = open(ftmp, "a")
+			tmp_out.write(out.strip())
+			tmp_out.write(";")
+			tmp_out.write(err.split("\n")[-2])
+			tmp_out.write(";")
+			tmp_out.write(str(y))
+			tmp_out.write(";")
+			tmp_out.write(str(i))
+			tmp_out.write("\n")
+			tmp_out.close()
+
+
+
+tmp_out.close()
 final = moyenne(result.items())
 print(final)
 file_out = open(fname, "wb")
