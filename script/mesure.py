@@ -1,26 +1,43 @@
 #! /usr/bin/env python
 
+import datetime
 import os
 import subprocess
+import argparse
 from collections import defaultdict
+
+# Parsing args
+parser = argparse.ArgumentParser(description='Scripting chain launching automatic tasks')
+parser.add_argument("-m", "--makefile", dest="fmakefile", default="../makefiles/premier",
+                  help="Relative path to Makefile directory")
+args = parser.parse_args()
+
+fmakefile = args.fmakefile
 
 #nbthread = [1,2,4,8,16,32]
 nbmachine = [1,2]
-nbthread = [1,2]
-hosts = ["ensipc150", "ensipc151", "ensipc144", "ensipc145", "ensipc149", "ensipc153", "ensipc142"]
+nbthread = [1,4]
+hosts = ["localhost"]
+#hosts = ["ensipc150", "ensipc151", "ensipc144", "ensipc145", "ensipc149", "ensipc153", "ensipc142"]
 
-#hosts = ["localhost"]
-start = 101
-fname = "mesures.csv"
-ftmp = "tmp.csv"
+# Date format
+now = datetime.datetime.now()
+date_format = now.strftime("%Y%m%d_%H%M%S")
 
-fmakefile = "../makefiles/premier"
+# Create subdirectory to save files
+directory = "mesures"
+if not os.path.exists(directory):
+    os.makedirs(directory)
 
+# File name to save mesures
+fname = "mesures/mesures_" + str(date_format) + ".csv"
+ftmp = "mesures/mesures_full_" + str(date_format) + ".csv"
+
+# Path to script repository
 script_repository = os.path.dirname(os.path.realpath(__file__))
-cmd_start = "./start.sh"
-cmd_stop = "./stop.sh"
 
 result = defaultdict(list)
+
 
 def moyenne(dict):
 	result = []
@@ -48,31 +65,28 @@ for y in nbmachine:
 		print("Calculating for nb thread : " + str(i*y))
 
 		for j in range(1,3):
-			print("Calculous for " + str(j))
+			print("Loop iteration n" + str(j))
 
 			# Make clean
-			print("make clean")
+			print("Executing : make clean")
 
 			p = subprocess.Popen("make clean" , shell=True, stdout=subprocess.PIPE, 
 										stderr=subprocess.PIPE, cwd=fmakefile)
 			p.wait()
 
 			# Launch the client
-			full_cmd_client = "export TIMEFORMAT=%E; time $GOPATH/bin/client --hostfile /tmp/hosts --makefile Makefile-verysmall -nbthread " + str(i)
+			full_cmd_client = "export TIMEFORMAT=%E; time $GOPATH/bin/client --hostfile /tmp/hosts --makefile Makefile -nbthread " + str(i)
 
-			print(full_cmd_client)
+			print("Executing : " + full_cmd_client)
 
 			p = subprocess.Popen(full_cmd_client , shell=True, stdout=subprocess.PIPE, 
 										stderr=subprocess.PIPE, cwd=fmakefile)
 			out, err = p.communicate()
 
-			#p = subprocess.Popen("export TIMEFORMAT=%E; time make -f Makefile-small -j4" , shell=True, stdout=subprocess.PIPE, 
-			#							stderr=subprocess.PIPE, cwd=fmakefile)
-			#out, err = p.communicate()
+			print("Real time : " + str(err.split("\n")[-2]))
+			print("NbThread used : " + out.strip())
 
-			print("time : " + str(err.split("\n")[-2]))
-			print("nb thread reel : " + out.strip())
-
+			# Store data in a dictionnary
 			result[out.strip()].append(float(err.split("\n")[-2]))
 
 			# Write in tmp file
@@ -88,8 +102,9 @@ for y in nbmachine:
 			tmp_out.close()
 
 
-
 tmp_out.close()
+
+# Calculting average on all the values for nb threads
 final = moyenne(result.items())
 print(final)
 file_out = open(fname, "wb")
