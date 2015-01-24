@@ -14,23 +14,30 @@
 \setlength{\parskip}{2mm}
 
 \section{Introduction}
-Ce rapport a pour but de présenter le travail réalisé dans le cadre du projet de systèmes distribués, en présentant notamment, le langage que nous avons utilisé et les algorithmes que nous avons utilisés.
+Ce rapport a pour but de présenter le travail réalisé dans le cadre du projet
+de systèmes distribués, en présentant notamment, le langage que nous avons
+utilisé et les algortihmes que nous avons utilisé.
 
-Dans une deuxième partie, nous présenterons les performances de notre application au travers des différents tests que nous avons réalisés. Cette partie se constituera principalement de courbes présentant les résultats.
+Dans une deuxième partie, nous présenterons les performances de notre
+application au traves des différents tests que nous avons réalisés. Cette
+partie se constituera principalement de courbes présentant les résultats.
 
 \section{Partie 1 : Présentation du projet}
 \subsection{Langage}
-Pour réaliser ce projet, nous avons utilisé le langage \textbf{Go}, développé par Google. Il s'agit d'un langage impératif et concurrent, inspiré du C et visant à de bonnes vitesses d'exécution tout en diminuant le temps du compilation par rapport au C. Go propose la librairie \textbf{RPC} (Remote Protocol Call) qui permet l'appel à des fonctions à distance (d'une instance Go à une autre). Go n'est pas présent nativement sur les machines de l'Ensimag, il faut donc installer le compilateur ainsi que les bibliothèques sur sa machine. Cela se réalise facilement en se rendant sur le site \href{http://golang.org/doc/install#download}{golang.org}.
+Pour réaliser ce projet, nous avons utilisé le langage \textbf{Go}, développé
+par Google. Go n'est pas présent nativement sur les machines de l'Ensimag, il
+faut donc installer le compilateur ainsi que les bibliothèques sur sa machine.
+Cela se réalise facilement en se rendant sur le site
+\href{http://golang.org/doc/install#download}{golang.org}.
 
 \subsection{Algorithmes}
 Le fonctionnement de notre application de makefile distribués se déroulent en deux parties :
 \begin{itemize}
-\item Lecture et construction de l'arbre de dépendances à partir du Makefile par le maître.
-\item Exécution des différentes tâches par les esclaves.
-
-La première étape, va permettre de construire l'arbre de dépendances à partir du Makefile.
-% TODO
-
+\item Lecture et construction de l'arbre de dépendances à partir du Makefile
+    par le client.
+\item Execution des différentes tâches par les workers. Le client envoie les
+    différentes tâches aux listeners qui lancent des workers qui exécuteront
+    les tâches.
 \end{itemize}
 
 \subsection{Structure du code}
@@ -42,9 +49,6 @@ Le code source est décomposé en plusieurs fichiers .go visant à créer deux e
 \item config.go : lecture du fichier de configuration pour préciser les hosts
 \item parser.go : construction de l'arbre des dépendances d'un Makefile
 \end{itemize}
-
-\subsection{Déploiement}
-La méthode pour déployer l'application est entièrement disponible dans le fichier \textit{readme.md} disponible à la racine du projet.
 
 \section{Partie 2 : Performances}
 
