@@ -16,11 +16,11 @@
 
 \section{Introduction}
 Ce rapport a pour but de présenter le travail réalisé dans le cadre du projet
-de systèmes distribués, en présentant notamment, le langage que nous avons
-utilisé et les algortihmes que nous avons utilisé.
+de systèmes distribués, en présentant notamment, le langage et les algorithmes
+que nous avons utilisés.
 
 Dans une deuxième partie, nous présenterons les performances de notre
-application au traves des différents tests que nous avons réalisés. Cette
+application au travers des différents tests que nous avons réalisés. Cette
 partie se constituera principalement de courbes présentant les résultats.
 
 \section{Partie 1 : Présentation du projet}
@@ -36,9 +36,9 @@ Le fonctionnement de notre application de makefile distribués se déroulent en 
 \begin{itemize}
 \item Lecture et construction de l'arbre de dépendances à partir du Makefile
     par le client.
-\item Execution des différentes tâches par les workers. Le client envoie les
-    différentes tâches aux listeners qui lancent des workers qui exécuteront
-    les tâches.
+\item Exécution des différentes tâches par les workers. Le client envoie les
+    différentes tâches aux listeners (en fonction des dépendances) qui lancent
+    des workers exécutant celle-ci.
 \end{itemize}
 
 \subsection{Structure du code}
@@ -46,7 +46,7 @@ Le code source est décomposé en plusieurs fichiers .go visant à créer deux e
 \begin{itemize}
 \item listener.go : écoute des clients et lancement de workers
 \item worker.go : exécution des commandes pour générer les cibles
-\item client.go : appel à config et au parser pour les options de config et l'arbre des dépandances puis appels aux workers pour créer les différentes cibles
+\item client.go : appel à config et au parser pour les options de config et l'arbre des dépendances puis appels aux workers pour créer les différentes cibles
 \item config.go : lecture du fichier de configuration pour préciser les hosts
 \item parser.go : construction de l'arbre des dépendances d'un Makefile
 \end{itemize}
